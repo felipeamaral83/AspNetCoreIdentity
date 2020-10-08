@@ -1,4 +1,10 @@
-﻿using AspNetCoreIdentity.Extensions;
+﻿using AspNetCoreIdentity.Data;
+using AspNetCoreIdentity.Extensions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AspNetCoreIdentity.Config
@@ -13,6 +19,24 @@ namespace AspNetCoreIdentity.Config
                 options.AddPolicy("PodeLer", policy => policy.Requirements.Add(new PermissaoNecessaria("PodeLer")));
                 options.AddPolicy("PodeEscrever", policy => policy.Requirements.Add(new PermissaoNecessaria("PodeEscrever")));
             });
+
+            return services;
+        }
+
+        public static IServiceCollection AddIdentityConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
+
+            services.AddDbContext<AspNetCoreIdentityContext>(options =>
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<AspNetCoreIdentityContext>();
 
             return services;
         }
